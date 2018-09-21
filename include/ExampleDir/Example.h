@@ -7,19 +7,16 @@
 
 #include <mutex>
 
-/*
- * @class
- * @brief Retrieves and stores the last chunk of an IPv4 address associated with an interface name.
- */
+/// Retrieves and stores the last chunk of an IPv4 address associated with an interface name.
 class NetworkProperties {
   private:
     static std::once_flag once;
-    static std::string ipAddrChunk;
+    static std::string ipAddrChunk; //!< Last chunk of IP address with interface name below.
   public:
-    static constexpr char interfaceName[] = "wlp2s0";
+    static constexpr char interfaceName[] = "wlp2s0"; //!< Interface name whose IP is to be determined.
     /**
      * @brief Retrieves the last chunk of the IPv4 address associated with the interfaceName above.
-     * @return Last chunk of IP address with interface name above.
+     * @return NetworkProperties::ipAddrChunk.
      */
     static const std::string& getLastIpChunk();
 };
