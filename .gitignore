@@ -1,0 +1,8 @@
+# Directories
+build
+.idea
+cmake-build-*
+
+# Temporary files
+*.swp
+*~
