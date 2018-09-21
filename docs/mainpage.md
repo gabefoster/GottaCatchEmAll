@@ -4,8 +4,8 @@ GottaCatchEmAll is an example of a basic CMake project with Catch2, CTest, Jenki
 
 ## Building the Tests
 
-Simply compile the included CMakeLists.txt with -DBUILD\_TESTING=true.
-To compile only tests with specific tags, add -DTEST\_TAGS="tag1, tag2".
+Simply compile the included CMakeLists.txt with `-DBUILD\_TESTING=true`.
+To compile only tests with specific tags, add `-DTEST\_TAGS="[tag1][tag2]"`.
 
 ## Running the Tests
 
