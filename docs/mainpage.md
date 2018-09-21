@@ -1,6 +1,8 @@
 # GottaCatchEmAll
 
 GottaCatchEmAll is an example of a basic CMake project with Catch2, CTest, Jenkins, and Doxygen intergration.
+It's meant to represent a typical project I might throw together in an afternoon, as all my recent work is proprietary.
+The code in this repo was written in one session (though it is based on a somewhat similar project I've worked on before).
 
 ## Building the Tests
 
