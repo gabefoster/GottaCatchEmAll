@@ -13,6 +13,13 @@ To compile only tests with specific tags, add `-DTEST\_TAGS="[tag1][tag2]"`.
 
 After compilation, run ctest.
 
+## Adding a test
+
+The test directory structure mirrors the src and include directory structures for a reason.
+Each directory corresponds to both a library (on the source code side) and a suite of file-level tests (on the test code side). With this in mind adding a test is as simple as appending an item to the `TEST_LIST` variable in the CMakeLists.txt.
+Doing so will cause the generation of a new test executable which both includes and links the necessary directory and library.
+This makes adding test executables a breeze.
+
 ## Jenkins Integration
 
 GottaCatchEmAll outputs logs in junit format, which can be easily parsed and displayed in Jenkins.
