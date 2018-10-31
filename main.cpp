@@ -2,19 +2,22 @@
  * @file
  */
 
-#include "Example.h"
+#include "Cerealizer.h"
 #include <iostream>
-#include <chrono>
+#include <future>
 
 int main() {
-  auto beginning = std::chrono::system_clock::now();
-  std::cout << NetworkProperties::getLastIpChunk() << std::endl;
-  auto middle = std::chrono::system_clock::now();
-  std::cout << NetworkProperties::getLastIpChunk() << std::endl;
-  auto end = std::chrono::system_clock::now();
-  std::chrono::duration<double> firstCallTime  = middle - beginning;
-  std::chrono::duration<double> secondCallTime = end - middle;
-  std::cout << "Elapsed time for first call: "  << firstCallTime.count()  << std::endl;
-  std::cout << "Elapsed time for second call: " << secondCallTime.count() << std::endl;
+  Cerealizer cerealizer(7000);
+  std::string cereal;
+  Json::Value root;
+  auto cerealize = std::thread(&Cerealizer::listenToTcp, &cerealizer);
+  while (true) {
+    cereal = std::move(cerealizer.getCereal());
+    root = cerealizer.decerealizeJson(cereal);
+    std::cerr << "Test is: " << root["test"] << std::endl;
+  }
+  cerealizer.setStatus(false);
+  cerealize.join();
   return 0;
 }
+

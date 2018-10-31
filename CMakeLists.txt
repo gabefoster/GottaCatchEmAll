@@ -45,7 +45,7 @@ target_compile_definitions(Example PRIVATE Wall lpthread)
 add_executable(Exemplar ${PROJECT_SOURCE_DIR}/main.cpp)
 target_include_directories(Exemplar PRIVATE ${PROJECT_SOURCE_DIR}/include/ExampleDir)
 target_compile_definitions(Exemplar PRIVATE Wall)
-target_link_libraries(Exemplar PUBLIC Example Threads::Threads -lpthread)
+target_link_libraries(Exemplar PUBLIC Example Threads::Threads -lpthread jsoncpp)
 set_target_properties(Example Exemplar PROPERTIES CXX_STANDARD 11
                                                   ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib"
                                                   RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/exe"
@@ -63,7 +63,7 @@ if (BUILD_TESTING)
     MATH(EXPR LAST_SLASH_POS_PLUS_ONE "${LAST_SLASH_POS}+1")
     string(SUBSTRING ${NAME} ${LAST_SLASH_POS_PLUS_ONE} ${UNIT_TEST_ELEMENT_LENGTH} UNIT_TEST_NAME)
     add_executable(${UNIT_TEST_NAME}_test ${PROJECT_SOURCE_DIR}/tests/${NAME}.test.cpp)
-    target_link_libraries(${UNIT_TEST_NAME}_test PUBLIC ${UNIT_TEST_NAME} Threads::Threads)
+    target_link_libraries(${UNIT_TEST_NAME}_test PUBLIC ${UNIT_TEST_NAME} Threads::Threads -lpthread jsoncpp)
     target_include_directories(${UNIT_TEST_NAME}_test PRIVATE ${PROJECT_SOURCE_DIR}/include/3rdParty/Catch/
                                                               ${PROJECT_SOURCE_DIR}/include/${UNIT_TEST_PATH})
     set_target_properties(${UNIT_TEST_NAME}_test PROPERTIES CXX_STANDARD 11
