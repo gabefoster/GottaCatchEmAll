@@ -6,8 +6,22 @@
 
 Cerealizer::Cerealizer(uint16_t port) {
   listener.reset(new tcpListener(port));
-  isListening = false;
-  isCerealReady = false;
+  cerealize = std::thread(&tcpListener::listen, listener.get());
+}
+
+Cerealizer::~Cerealizer() {
+  stopListening();
+}
+
+void Cerealizer::stopListening() {
+  listener->stopListening();
+  if (cerealize.joinable()) {
+    cerealize.join();
+  }
+}
+
+std::string Cerealizer::getCereal() {
+  return std::move(listener->getPacket());
 }
 
 std::string Cerealizer::cerealizeJson(Json::Value& data) {
@@ -24,28 +38,6 @@ bool Cerealizer::sendJson(Json::Value& data) {
   return true;
 }
 
-NetworkReturnStatus Cerealizer::listenToTcp() {
-  NetworkReturnStatus status = NetworkReturnStatus::NO_ERROR;
-  isListening = true;
-  while (isListening) {
-    {
-      status = listener->listen(cereal);
-      if (status != NetworkReturnStatus::NO_ERROR) { break; }
-      std::lock_guard<std::mutex> lk(cerealMutex);
-      isCerealReady = true;
-    }
-    cerealReadiness.notify_all();
-  }
-  return status;
-}
 
-std::string Cerealizer::getCereal() {
-  std::string retval;
-  std::unique_lock<std::mutex> lk(cerealMutex);
-  cerealReadiness.wait(lk, [&]{return isCerealReady.load();});
-  retval = std::move(cereal);
-  lk.unlock();
-  cerealReadiness.notify_all();
-  isCerealReady = false;
-  return retval;
-}
+
+

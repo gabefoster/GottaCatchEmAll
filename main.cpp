@@ -10,14 +10,12 @@ int main() {
   Cerealizer cerealizer(7000);
   std::string cereal;
   Json::Value root;
-  auto cerealize = std::thread(&Cerealizer::listenToTcp, &cerealizer);
   while (true) {
     cereal = std::move(cerealizer.getCereal());
     root = cerealizer.decerealizeJson(cereal);
-    std::cerr << "Test is: " << root["test"] << std::endl;
+    std::cerr << "Test is: " << root.get("test", "woof").asString() << std::endl;
   }
-  cerealizer.setStatus(false);
-  cerealize.join();
+  cerealizer.stopListening();
   return 0;
 }
 

@@ -5,7 +5,9 @@
 #ifndef TCP_LISTENER_H_
 #define TCP_LISTENER_H_
 
-#include <memory>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
 #include "NetworkServices.h"
 
 class tcpListener {
@@ -15,12 +17,19 @@ class tcpListener {
 public:
   explicit tcpListener(uint16_t port);
   ~tcpListener();
-  NetworkReturnStatus listen(std::string& incomingBody);
+  NetworkReturnStatus listen();
+  void stopListening();
+  std::string getPacket();
 private:
+  NetworkReturnStatus hear(std::string& incomingBody);
+  std::string packet;
+  std::mutex packetMutex;
+  std::condition_variable packetReadiness;
+  std::atomic<bool> isPacketReady;
+  std::atomic<bool> isListening;
   uint16_t port;
-  int connfd; //!< File descriptor of TCP connection
-  int cmd_sock; //!< TCP command socket
-  static constexpr size_t MAX_IN_BODY_SIZE = 358400; //!< Maximum incoming packet size (350 KB)
+  int tcpFileDescriptor; //!< File descriptor of TCP connection
+  int commandSocket; //!< TCP command socket
 
   /**
    * @brief Send packet header and body over TCP.
