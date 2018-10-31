@@ -4,6 +4,11 @@
 
 #include "Cerealizer.h"
 
+Cerealizer::Cerealizer() {
+  listener.reset(new tcpListener());
+  cerealize = std::thread(&tcpListener::listen, listener.get());
+}
+
 Cerealizer::Cerealizer(uint16_t port) {
   listener.reset(new tcpListener(port));
   cerealize = std::thread(&tcpListener::listen, listener.get());

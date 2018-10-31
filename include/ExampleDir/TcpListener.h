@@ -15,6 +15,7 @@ class tcpListener {
   friend class tcpListenerTest;
 #endif
 public:
+  tcpListener();
   explicit tcpListener(uint16_t port);
   ~tcpListener();
   NetworkReturnStatus listen();

@@ -8,16 +8,27 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-tcpListener::tcpListener(uint16_t port) {
-  commandSocket = initTcpSocket(port);
+tcpListener::tcpListener() {
+  commandSocket = initTcpSocket(DEFAULT_TCP_PORT);
   if (commandSocket < 0) {
-    exit(1);
+    throw(std::runtime_error("Failed to initialize TCP socket."));
   }
   std::cerr << "Awaiting a connection on port " << port << "." << std::endl;
   tcpFileDescriptor = accept(commandSocket, (struct sockaddr*)NULL, NULL);
-  std::cerr << "Accepted" << std::endl;
   if (tcpFileDescriptor == -1) {
-    exit(1);
+    throw(std::runtime_error("Failed to accept TCP socket."));
+  }
+}
+
+tcpListener::tcpListener(uint16_t port) {
+  commandSocket = initTcpSocket(port);
+  if (commandSocket < 0) {
+    throw(std::runtime_error("Failed to initialize TCP socket."));
+  }
+  std::cerr << "Awaiting a connection on port " << port << "." << std::endl;
+  tcpFileDescriptor = accept(commandSocket, (struct sockaddr*)NULL, NULL);
+  if (tcpFileDescriptor == -1) {
+    throw(std::runtime_error("Failed to accept TCP socket."));
   }
 };
 

@@ -5,32 +5,15 @@
 #include "NetworkServices.h"
 #include "arpa/inet.h"
 #include <algorithm>
-#include <cassert>
-#include <iostream>
+#include <stdexcept>
 #include <cstring>
 
-int initSocket(uint16_t port)
-{
+int initTcpSocket(uint16_t port) {
   int ret;  // for checking return values
   int listenfd;
-  const int one = 1;
 
-
-  // First check the parameter to determine what to do
-  if (port == 0) {
-    // Get a socket file descriptor for the command socket (via TCP)
-    listenfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    // Also set the port to the DEFAULT_PORT define
-    port = DEFAULT_PORT;
-  }
-  else if (port > 0) {
-    // Get a socket file descriptor for thecommand socket (via UDP)
-    listenfd = socket(AF_INET, SOCK_STREAM, 0);
-    ret = setsockopt( listenfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one) );
-    if (ret < 0) { throw std::runtime_error("Could not setsockopt(SO_REUSEADDR)."); }
-  }
-  else { throw std::out_of_range("Port designation out of range"); }
+  // Get a socket file descriptor for the command socket (via TCP)
+  listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
   // Check for an error in creating the socket
   if (listenfd == -1) {
@@ -56,7 +39,9 @@ int initSocket(uint16_t port)
 }
 
 int initUdpSocket(struct sockaddr_in* remoteAddr, long localPort, long outPort, const char* remoteIp){
-  assert(remoteIp != nullptr);
+  if (remoteIp == nullptr) {
+    throw(std::bad_alloc());
+  };
   int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (fd == -1) {
     return -1;

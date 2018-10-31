@@ -11,7 +11,7 @@
 #define ATTRIBUTE_PACKED __attribute__((__packed__))
 
 // Port that the command server will listen on
-#define DEFAULT_PORT 7000
+#define DEFAULT_TCP_PORT 7000
 #define HEADER_BUFFER_SIZE 1024
 
 typedef struct {
@@ -31,10 +31,9 @@ enum class NetworkReturnStatus : int16_t {  // uses in commands responses as ret
 
   /**
    * @brief Initialize the TCP command socket
-   * @param port Port on which to initialize socket
    * @return Success or failure mode of method
    */
-  int initSocket(uint16_t port);
+  int initTcpSocket(uint16_t port);
 
   /**
    * @brief Initialize the UDP data sockets

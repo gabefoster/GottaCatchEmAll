@@ -16,6 +16,7 @@ private:
   Json::StyledWriter styledWriter;
   std::thread cerealize;
 public:
+  Cerealizer();
   explicit Cerealizer(uint16_t port);
   ~Cerealizer();
   bool sendJson(Json::Value& data);
