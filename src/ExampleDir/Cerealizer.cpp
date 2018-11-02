@@ -2,6 +2,8 @@
  * @file
  */
 
+#include <cstring>
+#include <iostream>
 #include "Cerealizer.h"
 
 Cerealizer::Cerealizer() {
@@ -14,19 +16,29 @@ Cerealizer::Cerealizer(uint16_t port) {
   cerealize = std::thread(&tcpListener::listen, listener.get());
 }
 
+Cerealizer::Cerealizer(const std::string& addr) {
+  listener.reset(new tcpListener(addr, DEFAULT_TCP_PORT));
+  cerealize = std::thread(&tcpListener::speak, listener.get());
+}
+
+Cerealizer::Cerealizer(const std::string& addr, uint16_t port) {
+  listener.reset(new tcpListener(addr, port));
+  cerealize = std::thread(&tcpListener::speak, listener.get());
+}
+
 Cerealizer::~Cerealizer() {
   stopListening();
 }
 
 void Cerealizer::stopListening() {
-  listener->stopListening();
+  listener->stopCommunicating();
   if (cerealize.joinable()) {
     cerealize.join();
   }
 }
 
 std::string Cerealizer::getCereal() {
-  return std::move(listener->getPacket());
+  return std::move(listener->passPacketUp());
 }
 
 std::string Cerealizer::cerealizeJson(Json::Value& data) {
@@ -39,8 +51,8 @@ Json::Value Cerealizer::decerealizeJson(const std::string& data) {
   return retval;
 }
 
-bool Cerealizer::sendJson(Json::Value& data) {
-  return true;
+void Cerealizer::sendJson(Json::Value& data) {
+  listener->passPacketDown(std::move(cerealizeJson(data)));
 }
 
 

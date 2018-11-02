@@ -7,33 +7,52 @@
 #include <iostream>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <cstring>
 
 tcpListener::tcpListener() {
-  commandSocket = initTcpSocket(DEFAULT_TCP_PORT);
-  if (commandSocket < 0) {
-    throw(std::runtime_error("Failed to initialize TCP socket."));
+  isConnected = false;
+  commandSocket = acceptFromTcp(DEFAULT_TCP_PORT);
+  tcpFileDescriptor = accept(commandSocket, (struct sockaddr*)NULL, NULL);
+  isConnected = true;
+  if (tcpFileDescriptor == -1) {
+    throw(std::runtime_error("Failed to accept TCP socket."));
   }
   std::cerr << "Awaiting a connection on port " << port << "." << std::endl;
+}
+
+tcpListener::tcpListener(uint16_t port) {
+  isConnected = false;
+  commandSocket = acceptFromTcp(port);
+  std::cerr << "Awaiting a connection on port " << port << "." << std::endl;
   tcpFileDescriptor = accept(commandSocket, (struct sockaddr*)NULL, NULL);
+  isConnected = true;
   if (tcpFileDescriptor == -1) {
     throw(std::runtime_error("Failed to accept TCP socket."));
   }
 }
 
-tcpListener::tcpListener(uint16_t port) {
-  commandSocket = initTcpSocket(port);
+tcpListener::tcpListener(const std::string& addr) {
+  isConnected = false;
+  commandSocket = connectToTcp(addr, DEFAULT_TCP_PORT);
+  isConnected = true;
   if (commandSocket < 0) {
     throw(std::runtime_error("Failed to initialize TCP socket."));
   }
-  std::cerr << "Awaiting a connection on port " << port << "." << std::endl;
-  tcpFileDescriptor = accept(commandSocket, (struct sockaddr*)NULL, NULL);
-  if (tcpFileDescriptor == -1) {
-    throw(std::runtime_error("Failed to accept TCP socket."));
+}
+
+tcpListener::tcpListener(const std::string& addr, uint16_t port) {
+  isConnected = false;
+  tcpFileDescriptor = connectToTcp(addr, port);
+  isConnected = true;
+  if (tcpFileDescriptor < 0) {
+    throw(std::runtime_error("Failed to initialize TCP socket."));
   }
 };
 
 tcpListener::~tcpListener() {
-  close(port);
+  if (isConnected) {
+    close(port);
+  }
 }
 
 NetworkReturnStatus tcpListener::hear(std::string& incomingBody) {
@@ -106,8 +125,8 @@ int tcpListener::tcpSendAll(void* packet, size_t packetSize) {
 
 NetworkReturnStatus tcpListener::listen() {
   NetworkReturnStatus status = NetworkReturnStatus::NO_ERROR;
-  isListening = true;
-  while (isListening) {
+  isCommunicating = true;
+  while (isCommunicating) {
     {
       status = hear(packet);
       if (status != NetworkReturnStatus::NO_ERROR) { break; }
@@ -119,7 +138,16 @@ NetworkReturnStatus tcpListener::listen() {
   return status;
 }
 
-std::string tcpListener::getPacket() {
+void tcpListener::passPacketDown(std::string outgoingPacket) {
+  {
+    packet = std::move(outgoingPacket);
+    std::lock_guard<std::mutex> lk(packetMutex);
+    isPacketReady = true;
+  }
+  packetReadiness.notify_all();
+}
+
+std::string tcpListener::passPacketUp() {
   std::string retval;
   std::unique_lock<std::mutex> lk(packetMutex);
   packetReadiness.wait(lk, [&]{return isPacketReady.load();});
@@ -130,6 +158,33 @@ std::string tcpListener::getPacket() {
   return retval;
 }
 
-void tcpListener::stopListening() {
-  isListening = false;
+bool tcpListener::speak() {
+  bool status = true;
+  size_t packetSize = 0;
+  isCommunicating = true;
+  while (isCommunicating) {
+    PacketHeader packetHeader;
+    std::unique_lock<std::mutex> lk(packetMutex);
+    packetReadiness.wait(lk, [&]{return isPacketReady.load();});
+    packetSize = packet.size() + 1;
+    packetHeader.bodySize = packetSize;
+    char packetC[packetSize];
+    strncpy(packetC, packet.c_str(), packetSize);
+    packet.clear();
+    lk.unlock();
+    packetReadiness.notify_all();
+    isPacketReady = false;
+    status = tcpSendAll(&packetHeader, sizeof(PacketHeader)) == 0;
+    if (!status) { break; }
+    status = tcpSendAll(packetC, packetSize) == 0;
+    //status = tcpSendAll(packetC, packetSize) == 0;
+    if (!status) { break; }
+  }
+
+  return status;
+}
+
+void tcpListener::stopCommunicating() {
+  isCommunicating = false;
+  isCommunicating = false;
 }

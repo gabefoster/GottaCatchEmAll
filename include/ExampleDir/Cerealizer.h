@@ -18,12 +18,14 @@ private:
 public:
   Cerealizer();
   explicit Cerealizer(uint16_t port);
+  explicit Cerealizer(const std::string& addr);
+  Cerealizer(const std::string& addr,  uint16_t port);
   ~Cerealizer();
-  bool sendJson(Json::Value& data);
+  void stopListening();
+  void sendJson(Json::Value& data);
   std::string cerealizeJson(Json::Value& data);
   Json::Value decerealizeJson(const std::string& data);
   std::string getCereal();
-  void stopListening();
 };
 
 #endif //THIS_IS_AN_EXAMPLE_H

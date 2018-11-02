@@ -6,6 +6,7 @@
 #define NETWORK_SERVICES_H_
 
 #include <cstdint>
+#include <string>
 #include <sys/socket.h>
 
 #define ATTRIBUTE_PACKED __attribute__((__packed__))
@@ -33,7 +34,8 @@ enum class NetworkReturnStatus : int16_t {  // uses in commands responses as ret
    * @brief Initialize the TCP command socket
    * @return Success or failure mode of method
    */
-  int initTcpSocket(uint16_t port);
+  int connectToTcp(const std::string& addr, uint16_t port);
+  int acceptFromTcp(uint16_t port);
 
   /**
    * @brief Initialize the UDP data sockets
