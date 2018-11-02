@@ -51,6 +51,7 @@ tcpListener::tcpListener(const std::string& addr, uint16_t port) {
 
 tcpListener::~tcpListener() {
   if (isConnected) {
+    std::cerr << port << std::endl;
     close(port);
   }
 }
@@ -125,55 +126,55 @@ int tcpListener::tcpSendAll(void* packet, size_t packetSize) {
 
 NetworkReturnStatus tcpListener::listen() {
   NetworkReturnStatus status = NetworkReturnStatus::NO_ERROR;
-  isCommunicating = true;
-  while (isCommunicating) {
+  isListening = true;
+  while (isListening) {
     {
-      status = hear(packet);
+      status = hear(inPacket);
       if (status != NetworkReturnStatus::NO_ERROR) { break; }
-      std::lock_guard<std::mutex> lk(packetMutex);
-      isPacketReady = true;
+      std::lock_guard<std::mutex> lk(inPacketMutex);
+      isInPacketReady = true;
     }
-    packetReadiness.notify_all();
+    inPacketReadiness.notify_all();
   }
   return status;
 }
 
 void tcpListener::passPacketDown(std::string outgoingPacket) {
   {
-    packet = std::move(outgoingPacket);
-    std::lock_guard<std::mutex> lk(packetMutex);
-    isPacketReady = true;
+    outPacket = std::move(outgoingPacket);
+    std::lock_guard<std::mutex> lk(outPacketMutex);
+    isOutPacketReady = true;
   }
-  packetReadiness.notify_all();
+  outPacketReadiness.notify_all();
 }
 
 std::string tcpListener::passPacketUp() {
   std::string retval;
-  std::unique_lock<std::mutex> lk(packetMutex);
-  packetReadiness.wait(lk, [&]{return isPacketReady.load();});
-  retval = std::move(packet);
+  std::unique_lock<std::mutex> lk(inPacketMutex);
+  inPacketReadiness.wait(lk, [&]{return isInPacketReady.load();});
+  retval = std::move(inPacket);
   lk.unlock();
-  packetReadiness.notify_all();
-  isPacketReady = false;
+  inPacketReadiness.notify_all();
+  isInPacketReady = false;
   return retval;
 }
 
 bool tcpListener::speak() {
   bool status = true;
   size_t packetSize = 0;
-  isCommunicating = true;
-  while (isCommunicating) {
+  isSpeaking = true;
+  while (isSpeaking) {
     PacketHeader packetHeader;
-    std::unique_lock<std::mutex> lk(packetMutex);
-    packetReadiness.wait(lk, [&]{return isPacketReady.load();});
-    packetSize = packet.size() + 1;
+    std::unique_lock<std::mutex> lk(outPacketMutex);
+    outPacketReadiness.wait(lk, [&]{return isOutPacketReady.load();});
+    packetSize = outPacket.size() + 1;
     packetHeader.bodySize = packetSize;
     char packetC[packetSize];
-    strncpy(packetC, packet.c_str(), packetSize);
-    packet.clear();
+    strncpy(packetC, outPacket.c_str(), packetSize);
+    outPacket.clear();
     lk.unlock();
-    packetReadiness.notify_all();
-    isPacketReady = false;
+    outPacketReadiness.notify_all();
+    isOutPacketReady = false;
     status = tcpSendAll(&packetHeader, sizeof(PacketHeader)) == 0;
     if (!status) { break; }
     status = tcpSendAll(packetC, packetSize) == 0;
@@ -185,6 +186,6 @@ bool tcpListener::speak() {
 }
 
 void tcpListener::stopCommunicating() {
-  isCommunicating = false;
-  isCommunicating = false;
+  isSpeaking = false;
+  isListening = false;
 }

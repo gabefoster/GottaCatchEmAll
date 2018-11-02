@@ -14,7 +14,8 @@ private:
   std::unique_ptr<tcpListener> listener;
   Json::Reader reader;
   Json::StyledWriter styledWriter;
-  std::thread cerealize;
+  std::thread sendThread;
+  std::thread receiveThread;
 public:
   Cerealizer();
   explicit Cerealizer(uint16_t port);

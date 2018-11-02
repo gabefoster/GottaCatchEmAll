@@ -34,11 +34,16 @@ public:
   int tcpSendAll(void* packet, size_t packetSize);
 private:
   NetworkReturnStatus hear(std::string& incomingBody);
-  std::string packet;
-  std::mutex packetMutex;
-  std::condition_variable packetReadiness;
-  std::atomic<bool> isPacketReady;
-  std::atomic<bool> isCommunicating;
+  std::string inPacket;
+  std::string outPacket;
+  std::mutex inPacketMutex;
+  std::mutex outPacketMutex;
+  std::condition_variable inPacketReadiness;
+  std::condition_variable outPacketReadiness;
+  std::atomic<bool> isInPacketReady;
+  std::atomic<bool> isOutPacketReady;
+  std::atomic<bool> isListening;
+  std::atomic<bool> isSpeaking;
   std::atomic<bool> isConnected;
   uint16_t port;
   int tcpFileDescriptor; //!< File descriptor of TCP connection
